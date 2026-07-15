@@ -143,12 +143,9 @@ The Sports Hall Booking System digitizes the entire sports facility reservation 
 
 ## 👥 Team Members
 
- - **Roshitha Sri Appari** 
- - **Harshitha Pati** 
- - **Galiboina Prajyuth** 
- - **Atmakuri Charan Chand** 
- - **Dakarapu Sunny** 
-
+ - **Hemsai charan** 
+ - **Olipalli deveshkumar** 
+ 
 ---
 
 ## 🔮 Future Enhancements
