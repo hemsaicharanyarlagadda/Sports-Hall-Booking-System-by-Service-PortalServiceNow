@@ -1,0 +1,89 @@
+(function() {
+
+    // Current date & time
+    var now = new GlideDateTime();
+
+    // Time window: 10 to 11 minutes from now
+    var startWindow = new GlideDateTime(now);
+    startWindow.addSeconds(10 * 60);
+
+    var endWindow = new GlideDateTime(now);
+    endWindow.addSeconds(11 * 60);
+
+    // Query upcoming bookings
+    var gr = new GlideRecord('u_sports_hall_bookings');
+    gr.addQuery('u_status', 'Approved');
+    gr.addQuery('u_reminder_sent', false);
+    gr.addQuery('u_start_time', '>=', startWindow);
+    gr.addQuery('u_start_time', '<=', endWindow);
+    gr.query();
+
+    while (gr.next()) {
+
+        var hallName = gr.u_hall_name.getDisplayValue();
+        var startTime = gr.u_start_time.getDisplayValue();
+        var bookedBy = gr.u_booked_by.getRefRecord();
+
+        if (bookedBy.isValidRecord()) {
+
+            var email = bookedBy.email.toString();
+
+            var subject = "Sports Hall Booking Reminder";
+
+            var body = "";
+            body += "Dear " + bookedBy.name + ",\n\n";
+            body += "This is a reminder that your sports hall booking starts in approximately 10 minutes.\n\n";
+            body += "Hall Name : " + hallName + "\n";
+            body += "Start Time : " + startTime + "\n\n";
+            body += "Please arrive on time.\n\n";
+            body += "Thank You.";
+
+            gs.eventQueue(
+                "sportshall.booking.reminder",
+                gr,
+                email,
+                body
+            );
+
+            // Prevent duplicate reminders
+            gr.u_reminder_sent = true;
+            gr.update();
+        }
+    }
+
+})();
+######################################################################
+ #          Server Script for Auto Sending Email Reminders              
+#####################################################################
+(function() { // Get current datetime var now = new GlideDateTime();
+// Calculate 5 minutes from now
+var fiveMinutesLater = new GlideDateTime();
+fiveMinutesLater.add(5 60 1000); // 5 minutes in milliseconds
+// Calculate 7 minutes from now (window buffer)
+var sevenMinutesLater = new GlideDateTime();
+sevenMinutesLater.add(7 60 1000);
+// Query bookings
+var gr = new GlideRecord('u_sports_hall_bookings');
+gr.addQuery('u_status', 'pending');
+gr.addQuery('u_reminder_sent', false);
+gr.addQuery('u_start_time', '>=', fiveMinutesLater.getValue());
+gr.addQuery('u_start_time', '<=', sevenMinutesLater.getValue());
+gr.query();
+while (gr.next()) {
+var startTime = gr.u_start_time.getDisplayValue();
+var email = gr.u_email.toString();
+var hallName = gr.u_hall_name.toString();
+var bookedBy = gr.u_booked_by.getDisplayValue();
+if (!email || email == '') {
+gs.warn(' - Skipping: No email address');
+continue;
+}
+// Send event to trigger notification
+gs.eventQueue('sports.hall.reminder', gr, email, hallName);
+// Update record
+gr.u_reminder_sent = true;
+gr.u_instructions = 'Reminder sent at ' + now.getDisplayValue();
+gr.update();
+}
+})();
+
